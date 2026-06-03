@@ -26,7 +26,7 @@ function highlightLine(line) {
 }
 
 export default function CodeBlock({ code, className = '', numbered = false }) {
-  const lines = code.split('\n');
+  const lines = (code || '').split('\n');
 
   return (
     <pre className={`code-scroll font-mono text-[14px] leading-[1.45] ${className}`}>

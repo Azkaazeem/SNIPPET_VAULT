@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import toast, { Toaster } from 'react-hot-toast';
 import { CheckCircle2, X } from 'lucide-react';
@@ -16,6 +16,36 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSnippet, setSelectedSnippet] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [editingSnippet, setEditingSnippet] = useState(null);
+
+  useEffect(() => {
+    const loadSnippets = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/snippets');
+        if (response.ok) {
+          const data = await response.json();
+
+          // MongoDB ke fields (_id aur content) ko frontend ke formats (id aur code) mein map karein
+          const formattedSnippets = data.map((item) => ({
+            id: item._id,
+            icon: 'Code2', // Default icon jo aap pehle use kar rahi thin
+            title: item.title,
+            category: item.category,
+            code: item.content, // Backend ka content frontend ka code banega
+          }));
+
+          setSnippets(formattedSnippets);
+        } else {
+          toast.error('Failed to load snippets from database');
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast.error('Network error while loading snippets');
+      }
+    };
+
+    loadSnippets();
+  }, [])
 
   const visibleSnippets = useMemo(() => {
     const cleanQuery = query.trim().toLowerCase();
@@ -37,9 +67,8 @@ export default function App() {
     await navigator.clipboard.writeText(snippet.code);
     toast.custom((toastItem) => (
       <div
-        className={`vault-copy-toast ${
-          toastItem.visible ? 'translate-y-0 opacity-100' : '-translate-y-3 opacity-0'
-        }`}
+        className={`vault-copy-toast ${toastItem.visible ? 'translate-y-0 opacity-100' : '-translate-y-3 opacity-0'
+          }`}
       >
         <CheckCircle2 size={28} className="text-red-400" />
         <span>Copied to Clipboard!</span>
@@ -55,17 +84,87 @@ export default function App() {
     ));
   };
 
-  const saveSnippet = (snippet) => {
-    setSnippets((current) => [
-      {
-        id: crypto.randomUUID(),
-        icon: 'Code2',
-        ...snippet,
-      },
-      ...current,
-    ]);
-    setIsModalOpen(false);
-    toast.success('Snippet saved!');
+  const saveSnippet = async (snippet) => {
+    try {
+      // Backend API ko POST request bhejein
+      const response = await fetch('http://localhost:5000/api/snippets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(snippet), // snippet mein title, category, aur code hoga
+      });
+
+      if (response.ok) {
+        const savedSnippet = await response.json(); // MongoDB se save hua naya data
+
+        // React ki state update karein taake UI par naya card foran show ho jaye
+        setSnippets((current) => [
+          {
+            id: savedSnippet._id, // MongoDB ki generated ID
+            icon: 'Code2', // Default icon
+            title: savedSnippet.title,
+            category: savedSnippet.category,
+            code: savedSnippet.content, // Backend se wapas aane wala 'content' frontend ke 'code' variable mein dalain
+          },
+          ...current,
+        ]);
+
+        setIsModalOpen(false); // Modal close karein
+        toast.success('Snippet saved successfully!');
+      } else {
+        toast.error('Failed to save to database');
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error('Network error while saving snippet');
+    }
+  };
+
+  const deleteSnippet = async (id) => {
+    try {
+      // Backend ko delete karne ka bolo
+      const response = await fetch(`http://localhost:5000/api/snippets/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Agar database se delete ho jaye, toh screen (state) se bhi hata do
+        setSnippets((current) => current.filter((item) => item.id !== id));
+        toast.success('Snippet Deleted!');
+      } else {
+        toast.error('Failed to delete');
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error('Network Error');
+    }
+  };
+
+  const updateSnippet = async (updatedData) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/snippets/${editingSnippet.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData),
+      });
+
+      if (response.ok) {
+        const saved = await response.json();
+
+        // Screen par sirf us ek card ka data update karein
+        setSnippets((current) => current.map((item) =>
+          item.id === editingSnippet.id
+            ? { ...item, title: saved.title, category: saved.category, code: saved.content }
+            : item
+        ));
+
+        setEditingSnippet(null); // Edit mode band karein
+        toast.success('Snippet Updated!');
+      }
+    } catch (error) {
+      toast.error('Network Error while updating');
+    }
   };
 
   return (
@@ -111,20 +210,22 @@ export default function App() {
               index={index}
               onOpen={() => setSelectedSnippet(snippet)}
               onCopy={() => copySnippet(snippet)}
-              onEdit={() => setSelectedSnippet(snippet)}
-              onDelete={() =>
-                setSnippets((current) => current.filter((item) => item.id !== snippet.id))
-              }
+              onEdit={() => setEditingSnippet(snippet)}
+              onDelete={() => deleteSnippet(snippet.id)} // <--- Bas yeh choti si line
             />
           ))}
         </section>
       </main>
 
       <AnimatePresence>
-        {isModalOpen && (
+        {(isModalOpen || editingSnippet) && (
           <CreateSnippetModal
-            onClose={() => setIsModalOpen(false)}
-            onSave={saveSnippet}
+            snippetToEdit={editingSnippet}
+            onClose={() => {
+              setIsModalOpen(false);
+              setEditingSnippet(null);
+            }}
+            onSave={editingSnippet ? updateSnippet : saveSnippet}
           />
         )}
       </AnimatePresence>

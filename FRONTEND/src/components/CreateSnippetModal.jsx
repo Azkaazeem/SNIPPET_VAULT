@@ -14,11 +14,12 @@ const starterCode = `<button class="group relative inline-flex items-center
   <span class="relative z-10">Click Me</span>
 </button>`;
 
-export default function CreateSnippetModal({ onClose, onSave }) {
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('Tailwind CSS');
-  const [code, setCode] = useState(starterCode);
+export default function CreateSnippetModal({ onClose, onSave, snippetToEdit }) {
+  const [title, setTitle] = useState(snippetToEdit ? snippetToEdit.title : '');
+  const [category, setCategory] = useState(snippetToEdit ? snippetToEdit.category : 'Tailwind CSS');
+  const [code, setCode] = useState(snippetToEdit ? snippetToEdit.code : starterCode);
   const lineNumbers = Array.from({ length: code.split('\n').length }, (_, index) => index + 1);
+  const [editingSnippet, setEditingSnippet] = useState(null);
 
   const submit = (event) => {
     event.preventDefault();
@@ -48,17 +49,8 @@ export default function CreateSnippetModal({ onClose, onSave }) {
         className="w-full max-w-[820px] rounded-lg border border-red-500 bg-[#111]/95 p-6 shadow-[0_0_35px_rgba(255,0,0,0.48)] sm:p-8"
       >
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-[26px] font-bold leading-none text-white sm:text-[30px]">
-            Create New Asset
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            title="Close"
-            className="rounded-md p-1 text-white transition hover:bg-white/10"
-          >
-            <X size={26} />
-          </button>
+          <h2>{snippetToEdit ? 'Edit Asset' : 'Create New Asset'}</h2>
+          <button type="submit"> {snippetToEdit ? 'Update Snippet' : 'Save Snippet'} </button>
         </div>
 
         <label className="mb-5 block">
