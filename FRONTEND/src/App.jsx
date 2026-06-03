@@ -25,13 +25,12 @@ export default function App() {
         if (response.ok) {
           const data = await response.json();
 
-          // MongoDB ke fields (_id aur content) ko frontend ke formats (id aur code) mein map karein
           const formattedSnippets = data.map((item) => ({
             id: item._id,
-            icon: 'Code2', // Default icon jo aap pehle use kar rahi thin
+            icon: 'Code2',
             title: item.title,
             category: item.category,
-            code: item.content, // Backend ka content frontend ka code banega
+            code: item.content,
           }));
 
           setSnippets(formattedSnippets);
@@ -86,31 +85,29 @@ export default function App() {
 
   const saveSnippet = async (snippet) => {
     try {
-      // Backend API ko POST request bhejein
       const response = await fetch('http://localhost:5000/api/snippets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(snippet), // snippet mein title, category, aur code hoga
+        body: JSON.stringify(snippet),
       });
 
       if (response.ok) {
-        const savedSnippet = await response.json(); // MongoDB se save hua naya data
+        const savedSnippet = await response.json();
 
-        // React ki state update karein taake UI par naya card foran show ho jaye
         setSnippets((current) => [
           {
-            id: savedSnippet._id, // MongoDB ki generated ID
-            icon: 'Code2', // Default icon
+            id: savedSnippet._id,
+            icon: 'Code2',
             title: savedSnippet.title,
             category: savedSnippet.category,
-            code: savedSnippet.content, // Backend se wapas aane wala 'content' frontend ke 'code' variable mein dalain
+            code: savedSnippet.content,
           },
           ...current,
         ]);
 
-        setIsModalOpen(false); // Modal close karein
+        setIsModalOpen(false);
         toast.success('Snippet saved successfully!');
       } else {
         toast.error('Failed to save to database');
@@ -152,14 +149,13 @@ export default function App() {
       if (response.ok) {
         const saved = await response.json();
 
-        // Screen par sirf us ek card ka data update karein
         setSnippets((current) => current.map((item) =>
           item.id === editingSnippet.id
             ? { ...item, title: saved.title, category: saved.category, code: saved.content }
             : item
         ));
 
-        setEditingSnippet(null); // Edit mode band karein
+        setEditingSnippet(null);
         toast.success('Snippet Updated!');
       }
     } catch (error) {
@@ -211,7 +207,7 @@ export default function App() {
               onOpen={() => setSelectedSnippet(snippet)}
               onCopy={() => copySnippet(snippet)}
               onEdit={() => setEditingSnippet(snippet)}
-              onDelete={() => deleteSnippet(snippet.id)} // <--- Bas yeh choti si line
+              onDelete={() => deleteSnippet(snippet.id)}
             />
           ))}
         </section>

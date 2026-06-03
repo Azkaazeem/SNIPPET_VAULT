@@ -4,13 +4,11 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const mongoose = require('mongoose');
 
-// 1. Snippet model ko import karein (Yeh line add karein)
 const Snippet = require('./models/snippet.js');
 
 dotenv.config();
 app.use(cors());
 
-// 2. JSON data read karne ke liye middleware add karein (Yeh line add karein)
 app.use(express.json()); 
 
 mongoose.connect("mongodb://localhost:27017/snippetDB")
@@ -23,6 +21,7 @@ app.get('/', (req, res) => {
     res.send('Backend is running Successfully!');
 });
 
+// CREATE ROUTE
 app.post('/api/snippets', (req, res) => {
     // Note: Frontend se 'code' aa raha tha, isliye 'content' ki jagah 'code' ko receive karein 
     // ya phir frontend mein key ka naam 'content' kar dein. Main yahan 'code' use kar raha hon 
@@ -40,10 +39,9 @@ app.post('/api/snippets', (req, res) => {
         .catch(err => res.status(400).json('Error: ' + err));
 });
 
-// Saare Snippets Database se Get karne ka Route
+// READ ROUTE
 app.get('/api/snippets', async (req, res) => {
     try {
-        // Snippet.find() se saare snippets milenge, aur .sort() se naye snippets sab se upar aayenge
         const snippets = await Snippet.find().sort({ _id: -1 });
         res.json(snippets);
     } catch (error) {
@@ -51,11 +49,11 @@ app.get('/api/snippets', async (req, res) => {
     }
 });
 
-// Snippet Delete karne ka Route
+// DELETE ROUTE
 app.delete('/api/snippets/:id', async (req, res) => {
     try {
-        const id = req.params.id; // URL se id nikal li
-        await Snippet.findByIdAndDelete(id); // Database se delete kar diya
+        const id = req.params.id;
+        await Snippet.findByIdAndDelete(id); 
         
         res.json({ message: 'Snippet deleted successfully!' });
     } catch (error) {
@@ -63,13 +61,12 @@ app.delete('/api/snippets/:id', async (req, res) => {
     }
 });
 
-// Snippet Update (Edit) karne ka Route
+// UPDATE ROUTE
 app.put('/api/snippets/:id', async (req, res) => {
     try {
-        const id = req.params.id; // URL se id nikal li
-        const { title, category, code } = req.body; // Frontend se naya data aaya
+        const id = req.params.id;
+        const { title, category, code } = req.body;
 
-        // findByIdAndUpdate: pehla parameter ID, doosra naya data, teesra {new: true} taake update hone ke baad naya data return ho
         const updatedSnippet = await Snippet.findByIdAndUpdate(
             id,
             { title: title, category: category, content: code },
