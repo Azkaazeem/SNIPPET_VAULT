@@ -21,7 +21,7 @@ export default function App() {
   useEffect(() => {
     const loadSnippets = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/snippets');
+        const response = await fetch('https://snippet-vault-rust.vercel.app/api/snippets');
         if (response.ok) {
           const data = await response.json();
 
@@ -85,7 +85,7 @@ export default function App() {
 
   const saveSnippet = async (snippet) => {
     try {
-      const response = await fetch('http://localhost:5000/api/snippets', {
+      const response = await fetch('https://snippet-vault-rust.vercel.app/api/snippets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -121,7 +121,7 @@ export default function App() {
   const deleteSnippet = async (id) => {
     try {
       // Backend ko delete karne ka bolo
-      const response = await fetch(`http://localhost:5000/api/snippets/${id}`, {
+      const response = await fetch(`https://snippet-vault-rust.vercel.app/api/snippets/${id}`, {
         method: 'DELETE',
       });
 
@@ -140,7 +140,7 @@ export default function App() {
 
   const updateSnippet = async (updatedData) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/snippets/${editingSnippet.id}`, {
+      const response = await fetch(`https://snippet-vault-rust.vercel.app/api/snippets/${editingSnippet.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedData),
